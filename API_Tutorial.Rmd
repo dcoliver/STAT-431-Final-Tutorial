@@ -1,0 +1,127 @@
+---
+title: "API Tutorial"
+author: "Delaney Oliver"
+date: "6/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(httr)
+library(jsonlite)
+```
+******
+
+### **API : Application Programming Interface**
+
+******
+
+If you have taken the plunge into the world of programming, you have probably heard the buzz word/acronym API at some point. And maybe, like I did for many years, you pretended to know what it means. Today we will take a look into the world of APIs and begin to recognize the relevance and applicability of APIs, or, Application Programming Interfaces.  
+
+******
+
+***Required Reading: Introduction to APIs***
+https://rapidapi.com/blog/api-glossary/api/
+
+******
+Now that we have learned what an API is and where it is used, we will jump into an example. In the statistics field, APIs are generally used to access data, whether it be public data from Twitter or private data for Insurance claims within your company. Today we will step through an example of how to query  an API that computes the next n number of times that the International Space Station will be overhead a given latitude and longitude. 
+
+This example will use JSON notation. If you are unfamiliar with the JSON text-base formatting, checkout the link below for an introduction: 
+
+******
+
+***Optional Reading: Introduction to JSON***
+
+https://rapidapi.com/blog/api-glossary/json/
+
+******
+
+### **API Example 1: International Space Station Pass Times of a Given Location**
+
+First, let's check out the API's homepage:
+
+http://open-notify.org/Open-Notify-API/ISS-Pass-Times/
+
+
+The homepage gives a nice description of what data we will be accessing as well as what the requirements are for a API request.  
+
+*Input:* Required and optional arguments to make a request to the API. 
+
+*Output:* What the API will return if the request is processed and accepted. We will be using JSON text format, thus we will use respective the link provided. 
+
+http://api.open-notify.org/iss-pass.json?lat=LAT&lon=LON
+
+You will notice that opening this link on google leads to a weird looking page. This is because this link is the request link and will be used in our GET request: 
+
+******
+
+**Step 1: The GET request:**
+
+We will start by putting the link above into the GET function:
+
+```{r}
+GET("http://api.open-notify.org/iss-pass.json?lat=LAT&lon=LON")
+```
+
+You will notice that in the "message" section we have a failure. This is because we have not listed the two required inputs of this API: Latitude and Longitude. Thus, we will choose a latitude and longitude and use the Input section of the API's main homepage. But we cannot simply type in latitude as a parameter, we need to make a request with a query including the API's query strings.
+
+The latitude input has a query sting "lat" and the longitude input has a query string "lon". To speed up the request, we will also use an optional argument, Number, to limit the outputted number of pass times to 3. Number has a query string "n".
+
+*Let's use San Luis Obispo's location: latitude 35.2828, longitude = -120.6596*
+
+We will have to set the query equal to a list with the query strings and inputs. 
+
+```{r}
+GET("http://api.open-notify.org/iss-pass.json", query =list(lat = 35.2828, lon = -120.6596, n =3))
+```
+
+Wooohooo! Looking at the "message" section, we can now see that we have made a sucessful query! 
+
+******
+
+**Step 2: What do we need from the request?**
+
+This is where it gets a bit tricky. To get the passing times, we will have to step through a few fuzzy steps. The first being this one, where we will pull the "contents" section from the result of the request. This step is minimal, but will lead us down the right path. 
+
+```{r, results=FALSE}
+GET("http://api.open-notify.org/iss-pass.json", query =list(lat = 35.2828, lon = 120.6596, n =3))$content
+```
+
+******
+
+**Step 3: converting the raw text to character text to be used in the fromJSON function**
+
+The fromJSON function converts JSON data to R objects, but to use this function, we first need to convert the data from the raw Unicode into a character vector that resembles the JSON format.  
+
+```{r, results = FALSE}
+rawToChar(GET("http://api.open-notify.org/iss-pass.json", query =list(lat = 35.2828, lon = 120.6596, n =3))$content)
+```
+
+******
+
+**Step 4: using the fromJSON function and covert the object to a data frame**
+
+Here we will finally convert the JSON text to an R object. 
+```{r, results= FALSE}
+fromJSON(rawToChar(GET("http://api.open-notify.org/iss-pass.json", query =list(lat = 35.2828, lon = 120.6596, n =3))$content))
+```
+
+And then make it a data frame.  
+
+```{r, results= FALSE}
+out_table <- data.frame(fromJSON(rawToChar(GET("http://api.open-notify.org/iss-pass.json", query =list(lat = 35.2828, lon = 120.6596, n =3))$content)))
+```
+
+```{r, echo=FALSE}
+knitr::kable(out_table)
+```
+
+Taaaadaaaa !! We have just used an API to collect data !!
+
+******
+
+### **API Example 2: Querying multiple Locations at once**
+
+Now querying one location at a time is cool, but more than likely, you are going to want to do this for a whole list of locations, thus, let's use a mapping fucntion to show how we can create multiple data frames in one function. 
+
+
