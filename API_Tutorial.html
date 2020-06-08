@@ -398,7 +398,7 @@ summary {
 <p>We will start by putting the link above into the GET function:</p>
 <pre class="r"><code>GET(&quot;http://api.open-notify.org/iss-pass.json?lat=LAT&amp;lon=LON&quot;)</code></pre>
 <pre><code>## Response [http://api.open-notify.org/iss-pass.json?lat=LAT&amp;lon=LON]
-##   Date: 2020-06-08 08:37
+##   Date: 2020-06-08 09:30
 ##   Status: 400
 ##   Content-Type: application/json
 ##   Size: 90 B
@@ -412,7 +412,7 @@ summary {
 <p>We will have to set the query equal to a list with the query strings and inputs.</p>
 <pre class="r"><code>GET(&quot;http://api.open-notify.org/iss-pass.json&quot;, query =list(lat = 35.2828, lon = -120.6596, n =3))</code></pre>
 <pre><code>## Response [http://api.open-notify.org/iss-pass.json?lat=35.2828&amp;lon=-120.6596&amp;n=3]
-##   Date: 2020-06-08 08:37
+##   Date: 2020-06-08 09:30
 ##   Status: 200
 ##   Content-Type: application/json
 ##   Size: 391 B
@@ -420,7 +420,7 @@ summary {
 ##   &quot;message&quot;: &quot;success&quot;, 
 ##   &quot;request&quot;: {
 ##     &quot;altitude&quot;: 100, 
-##     &quot;datetime&quot;: 1591604350, 
+##     &quot;datetime&quot;: 1591607959, 
 ##     &quot;latitude&quot;: 35.2828, 
 ##     &quot;longitude&quot;: -120.6596, 
 ##     &quot;passes&quot;: 3
@@ -459,32 +459,32 @@ summary {
 <tr class="odd">
 <td align="left">success</td>
 <td align="right">100</td>
-<td align="right">1591604354</td>
+<td align="right">1591607959</td>
 <td align="right">35.2828</td>
 <td align="right">120.6596</td>
 <td align="right">3</td>
 <td align="right">609</td>
-<td align="right">1591608600</td>
+<td align="right">1591608599</td>
 </tr>
 <tr class="even">
 <td align="left">success</td>
 <td align="right">100</td>
-<td align="right">1591604354</td>
+<td align="right">1591607959</td>
 <td align="right">35.2828</td>
 <td align="right">120.6596</td>
 <td align="right">3</td>
-<td align="right">635</td>
-<td align="right">1591614398</td>
+<td align="right">634</td>
+<td align="right">1591614397</td>
 </tr>
 <tr class="odd">
 <td align="left">success</td>
 <td align="right">100</td>
-<td align="right">1591604354</td>
+<td align="right">1591607959</td>
 <td align="right">35.2828</td>
 <td align="right">120.6596</td>
 <td align="right">3</td>
-<td align="right">90</td>
-<td align="right">1591620429</td>
+<td align="right">85</td>
+<td align="right">1591620430</td>
 </tr>
 </tbody>
 </table>
@@ -493,6 +493,218 @@ summary {
 </div>
 <div id="api-example-2-querying-multiple-locations-at-once" class="section level3">
 <h3><strong>API Example 2: Querying multiple Locations at once</strong></h3>
+<p>Now querying one location at a time is cool, but more than likely, you are going to want to do this for a whole list of locations, thus, let’s use a mapping function to show how we can create multiple data frames in one function.</p>
+<p>We will query the passing times for every state. The link to the data is below, download the file and update your path. Make sure to install the “readxl” package before running this next chunk.</p>
+<p><a href="https://github.com/dcoliver/STAT-431-Final-Tutorial/blob/master/Lats%20and%20lons.xlsx" class="uri">https://github.com/dcoliver/STAT-431-Final-Tutorial/blob/master/Lats%20and%20lons.xlsx</a></p>
+<pre class="r"><code>lats_lons &lt;- read_excel(&quot;~/Documents/Cal Poly/STAT 431/STAT-431-Final-Tutorial/Lats and lons.xlsx&quot;)</code></pre>
+<hr />
+<p><strong>Step 1: complete Example 1 above</strong></p>
+<p>We will build a funciton that repeats this example many times.</p>
+<hr />
+<p><strong>Step 2: Use the Pmap function to map all lats and longitudes to out earlier request with a single query:</strong></p>
+<p><em>Make sure to load in the “purrr” package to use the pmap function</em></p>
+<p>The pmap function will use a list format to take in the arguments we want to repeat. Then we build a function just as our above query, but instead of listing a specific latitude, we will put in x, which contains a list of latiudes and y, which contains a list of longitudes.</p>
+<pre class="r"><code>state_passes &lt;- pmap(list(x = lats_lons$Latitude, y = lats_lons$Longitude),
+     .f = function(x, y) {
+       data.frame(fromJSON(rawToChar(GET(&quot;http://api.open-notify.org/iss-pass.json&quot;, query =list(lat = x, lon = y, n =3))$content)))
+       })</code></pre>
+<p>To combine the results of our pmap function into one data set, rather than 50 individual data sets.</p>
+<pre class="r"><code>state_passes_df &lt;- bind_rows(state_passes)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">message</th>
+<th align="right">request.altitude</th>
+<th align="right">request.datetime</th>
+<th align="right">request.latitude</th>
+<th align="right">request.longitude</th>
+<th align="right">request.passes</th>
+<th align="right">response.duration</th>
+<th align="right">response.risetime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">32.80667</td>
+<td align="right">-86.79113</td>
+<td align="right">3</td>
+<td align="right">521</td>
+<td align="right">1591629555</td>
+</tr>
+<tr class="even">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">32.80667</td>
+<td align="right">-86.79113</td>
+<td align="right">3</td>
+<td align="right">649</td>
+<td align="right">1591635275</td>
+</tr>
+<tr class="odd">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">32.80667</td>
+<td align="right">-86.79113</td>
+<td align="right">3</td>
+<td align="right">494</td>
+<td align="right">1591641197</td>
+</tr>
+<tr class="even">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">61.37072</td>
+<td align="right">-152.40442</td>
+<td align="right">3</td>
+<td align="right">363</td>
+<td align="right">1591652474</td>
+</tr>
+<tr class="odd">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">61.37072</td>
+<td align="right">-152.40442</td>
+<td align="right">3</td>
+<td align="right">541</td>
+<td align="right">1591658117</td>
+</tr>
+<tr class="even">
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607299</td>
+<td align="right">61.37072</td>
+<td align="right">-152.40442</td>
+<td align="right">3</td>
+<td align="right">577</td>
+<td align="right">1591663850</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="and-we-have-done-it-you-have-sucessfully-queried-an-api-50-times-in-on-pass." class="section level3">
+<h3><strong>And we have done it !!! You have sucessfully queried an API 50 times in on pass.</strong></h3>
+<p><strong><em>The data will need some cleaning, renaming and restructuring, but that part is one you ;). Happy API-ing!</em></strong></p>
+<hr />
+</div>
+<div id="check-in-1-apis" class="section level2">
+<h2><strong>Check-In 1: API’s</strong></h2>
+<ol style="list-style-type: decimal">
+<li>How do we know what a GET request must have in the query parameter?
+<ol style="list-style-type: lower-alpha">
+<li>guess and check method</li>
+<li>open the API request link</li>
+<li>go to the API homepage and find the “Input” section</li>
+<li>I already know! They are all the same.</li>
+</ol></li>
+</ol>
+<hr />
+<ol start="2" style="list-style-type: decimal">
+<li>What text format did we use in Example 1 and 2?
+<ol style="list-style-type: lower-alpha">
+<li>raw text</li>
+<li>JSON text format</li>
+<li>API text format</li>
+<li>web request text format</li>
+</ol></li>
+</ol>
+<hr />
+<ol start="3" style="list-style-type: decimal">
+<li>Describe how we can move from querying the API for one request to querying for many requests.</li>
+</ol>
+<hr />
+<p><em>Quick Hint</em></p>
+<p><strong>Step 3: Merge results of API query to the names of each state:</strong></p>
+<pre class="r"><code>states_with_passes &lt;- merge(lats_lons, state_passes_df, by.x=c(&quot;Latitude&quot;, &quot;Longitude&quot;), by.y = c(&quot;request.latitude&quot;, &quot;request.longitude&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Latitude</th>
+<th align="right">Longitude</th>
+<th align="left">State</th>
+<th align="left">message</th>
+<th align="right">request.altitude</th>
+<th align="right">request.datetime</th>
+<th align="right">request.passes</th>
+<th align="right">response.duration</th>
+<th align="right">response.risetime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">21.09432</td>
+<td align="right">-157.49834</td>
+<td align="left">Hawaii</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607302</td>
+<td align="right">3</td>
+<td align="right">628</td>
+<td align="right">1591646066</td>
+</tr>
+<tr class="even">
+<td align="right">21.09432</td>
+<td align="right">-157.49834</td>
+<td align="left">Hawaii</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607302</td>
+<td align="right">3</td>
+<td align="right">548</td>
+<td align="right">1591651915</td>
+</tr>
+<tr class="odd">
+<td align="right">21.09432</td>
+<td align="right">-157.49834</td>
+<td align="left">Hawaii</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607302</td>
+<td align="right">3</td>
+<td align="right">371</td>
+<td align="right">1591675787</td>
+</tr>
+<tr class="even">
+<td align="right">27.76628</td>
+<td align="right">-81.68678</td>
+<td align="left">Florida</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607301</td>
+<td align="right">3</td>
+<td align="right">625</td>
+<td align="right">1591629480</td>
+</tr>
+<tr class="odd">
+<td align="right">27.76628</td>
+<td align="right">-81.68678</td>
+<td align="left">Florida</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607301</td>
+<td align="right">3</td>
+<td align="right">585</td>
+<td align="right">1591635308</td>
+</tr>
+<tr class="even">
+<td align="right">27.76628</td>
+<td align="right">-81.68678</td>
+<td align="left">Florida</td>
+<td align="left">success</td>
+<td align="right">100</td>
+<td align="right">1591607301</td>
+<td align="right">3</td>
+<td align="right">102</td>
+<td align="right">1591641428</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
